@@ -1,0 +1,16 @@
+[
+	{
+		"type": "picture",
+		"filename": "cursor.png",
+		"name": "Cursor",
+		"attribution": {},
+		"location": "./pictures/"
+	} , 
+	{
+		"type": "picture",
+		"filename": "Kebabpizza2016.png",
+		"name": "Kebabpizza",
+		"attribution": {},
+		"location": "./pictures/"
+	} 
+]
