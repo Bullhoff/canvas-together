@@ -18,11 +18,11 @@
 					:style="[p.propStyle.selected]" >
 					<template v-if="(typeof p.selected != 'object')">
 						<!-- ab	{{ typeof p.selected }} -->
-						{{ p.selected }}
+						{{ (p.selected)? p.selected : '\xa0' }}
 					</template>
 					<template v-else>
 						<!-- cd	{{ typeof p.selected }} -->
-						{{ p.selected?.name }}
+						{{ (p.selected?.name)? p.selected?.name : '\xa0' }}
 					</template>
 					<!-- {{ ()=>p.selected }} -->  <!-- {{ p.state.open }} -->
 			</p>
@@ -67,7 +67,8 @@
 				:class="{ grayed: pState[(item?.id)?item.id:item]?.hidden }"
 				style="display: flex; flex-flow: row ; justify-content: flex-end; gap:0.2ch; align-items: center;" class="row" 
 			>
-				<p @click="selected($event, item)" 
+				<p 	@click="selected($event, item)" 
+					@click.middle="middleClick($event, item)"
 					:title="
 						((item?.name)?item.name+' -- '+item.id : (item)) + 
 						((item?.id && canvasStore().canvasHistory[item?.id]) ? ' -- ' + canvasStore().canvasHistory[item?.id].length : '')
@@ -234,6 +235,7 @@ const defaultProps = {
 		}, 
 		selectedContainer:{
 			width:'auto',
+			overflow: 'hidden',
 			//width:'100%',
 			paddingRight: '0.0ch',
 		},
@@ -385,6 +387,9 @@ async function increment(val){
 	refs.selected.textContent = await setWithinLimit(await getValue() + val)
 	emit('selected', refs.selected.textContent)
 }
+async function middleClick(e, val){
+	emit('click-middle', (typeof val == 'object') ? val.id : value)
+}
 async function selected(e, val){
 	console.log('!!!!!!!!!selected', val.id, val, e.target.textContent)
 	let value
@@ -411,7 +416,7 @@ onMounted(() => {
 watch(()=>props.selected, ()=>{
 	console.log('(**********ö*ö*********)', props.selected)
 	p.selected = props.selected
-	refs.selected.textContent = p.selected
+	refs.selected.textContent = (p.selected) ? p.selected : '\xa0'
 	if(p.settings.containerWidthMode == 'adjustFontSize')
 		adjustSelectedFontSize()
 })

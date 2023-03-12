@@ -3,7 +3,7 @@ import { defineStore } from 'pinia';
 import * as utils from './../utils.js'
 import c from './../constants.js'
 import assetlist from "@/assets/assetlist.json"
-
+import { canvasStore, store } from './store.js';
 
 export const configStore = defineStore('config', { 
 	state:() => {
@@ -31,20 +31,26 @@ export const configStore = defineStore('config', {
 				hideLayersByDefault: false, 
 				hideLayersNotOwnedBySelf: false,
 				hideLayersLongerThan: 99,
-
+				disableLoader: false, 
 				guidePopupsEnabled: true,
 				debug: false, 
+				test: false, 
+			}),
+			pizzaCompanion: reactive({
+				open: false, 
 			}),
 			debugSettings: reactive({
 				$enableConsole: {tooltip:'Requires save and restart'},
 				enableConsole: false
 			}),
-			navigation: {
+			navigation: reactive({
 				keyTranslateIntensity: ref(100),
 				doubleClickZoomIntensity: ref(2),
-				scrollZoomIntensity : ref(0.1),
-				infinateScroll : ref(false),
-			},
+				scrollZoomIntensity : ref(0.5),
+				infinateScroll : ref(false), 
+				$dragDelay_ms: {tooltip: 'Adds a redraw delay when dragging'},
+				dragDelay_ms: 100
+			}),
 			navState : reactive({
 				scale: 1, 
 				ofs: {x: 0, y:0}, 
@@ -70,6 +76,7 @@ export const configStore = defineStore('config', {
 				picture: {sizeMultiplier:15, name:'Chinese man', file:'icons8-chinese-64.png', },
 				unicode: {name:'FACE SCREAMING IN FEAR',code:'1F631',sizeMultiplier:15, selectedCategory : 'Emoticons', },
 			},
+			
 			cursor: {
 				display: true, 
 				sizeMultiplier:1, 
@@ -79,6 +86,18 @@ export const configStore = defineStore('config', {
 				fillColor: 'same',
 				emitCursor: true, 
 				receiveCursor: true,
+
+				updateDelay_ms: 100,
+				usernameDisplay: true, 
+				usernameColor: 'same', 
+				usernameStyle: {
+					'font-weight': 'bold', 
+					'font-style': 'normal', 
+					'font-variant': 'normal', 
+					$usernameSizeMultiplier: {tooltip: 'more big more lag'}, 
+					usernameSizeMultiplier: 4,
+					'font-family': 'serif', 
+				},
 			},
 			lists: reactive({
 				colors: (['random','#ff0000', '#00ff00', '#0000ff']),
@@ -142,8 +161,94 @@ export const configStore = defineStore('config', {
 		}
 	}, getters: {
 	}, actions: {
-		toggle: (key) => {
-			bool[key] =! bool[key]
+		zoomHandler(e, zoom) {
+			let ref = canvasStore().canvasRefs[Object.keys(canvasStore().canvasList)[0]]
+			var x = e.clientX - ref.offsetLeft;
+			var y = e.clientY - ref.offsetTop;
+			for (const id of Object.keys(canvasStore().canvasRefs)) {
+				const ctx = canvasStore().canvasRefs[id].getContext('2d')
+				ctx.translate(configStore().navState.ofs.x, configStore().navState.ofs.y);
+			}
+			configStore().navState.ofs.x -= x / (configStore().navState.scale * zoom) - x / configStore().navState.scale;
+			configStore().navState.ofs.y -= y / (configStore().navState.scale * zoom) - y / configStore().navState.scale;
+			for (const id of Object.keys(canvasStore().canvasRefs)) {
+				const ctx = canvasStore().canvasRefs[id].getContext('2d')
+				ctx.scale(zoom, zoom);
+				ctx.translate(-configStore().navState.ofs.x, -configStore().navState.ofs.y);
+			}
+			configStore().navState.scale *= zoom;
+			canvasStore().queue.push({event:'redraw', layer_id:null, source:'self'})
 		},
+		_zoomHandler({e, scale = configStore().navState.scale} = {}) {
+			let rect = canvasStore().canvasRefs[Object.keys(canvasStore().canvasRefs)[0]].getBoundingClientRect()
+			let posIrl = {
+				x: ((e.clientX+rect.x) / configStore().navState.scale) + (configStore().navState.ofs.x)/ 1 +0, 
+				y: ((e.clientY+rect.y) / configStore().navState.scale) + (configStore().navState.ofs.y)/ 1 +0
+			}
+			let scaledSize = {
+				x: window.innerWidth*scale, 
+				y: window.innerHeight*scale
+			}
+			//let curr = canvasStore().ctx[Object.keys(canvasStore().ctx)[0]].getTransform()
+			let constraints = {
+				x0: -(configStore().navState.ofs.x / scale), 
+				y0: -(configStore().navState.ofs.y / scale), 
+				x: (canvasStore().state.sizeCanvas.w / scale) -(configStore().navState.ofs.x / scale), 
+				y: (canvasStore().state.sizeCanvas.h / scale) -(configStore().navState.ofs.y / scale),
+			}
+			let visibleCanvas = {}
+			visibleCanvas['x'] = constraints.x - constraints.x0
+			visibleCanvas['y'] = constraints.y - constraints.y0
+			/* visibleCanvas['x'] = Math.abs(constraints.x) + Math.abs(constraints.x0)
+			visibleCanvas['y'] = Math.abs(constraints.y) + Math.abs(constraints.y0) */
+
+			let center = {
+				x: ((posIrl.x - visibleCanvas.x/2) / configStore().navState.scale) , 
+				y: ((posIrl.y - visibleCanvas.y/2) / configStore().navState.scale) ,
+			}
+			configStore().navState.scale = scale
+			store().msg({ye:{
+				navState: {
+					1: configStore().navState.scale, 
+					2: scale,
+					ofsX: configStore().navState.ofs.x, 
+					ofsY: configStore().navState.ofs.y,
+				}, 
+				rect,
+				e: {x:e.clientX,y:e.clientY},
+				posIrl, 
+				constraints: constraints, 
+				visibleCanvas,
+				center: center, 
+			}})
+			/* configStore().navState.ofs.x = -x
+			configStore().navState.ofs.y = -y */
+			for (const id of Object.keys(canvasStore().ctx)) {
+				configStore().navState.ofs.x = center.x 	//+ 	configStore().navState.ofs.x*configStore().navState.ofs/2
+				configStore().navState.ofs.y = center.y 	//+ 	configStore().navState.ofs.y*configStore().navState.ofs/2
+				/* let center = {
+					x: (((scaledSize.x) - canvasStore().state.sizeCanvas.w)/2) / configStore().navState.scale, 
+					y: (((scaledSize.y) - canvasStore().state.sizeCanvas.h)/2) / configStore().navState.scale
+				} 
+				configStore().navState.ofs.x = center.x * x*2
+				configStore().navState.ofs.y = center.y * y*2
+				console.log(x, y, center) */
+				canvasStore().ctx[id].setTransform(configStore().navState.scale, 0, 0, configStore().navState.scale, 0, 0);
+				canvasStore().ctx[id].translate(-configStore().navState.ofs.x, -configStore().navState.ofs.y)
+				
+				/* canvasStore().ctx[id].setTransform(scale, 0, 0, scale, 0, 0);
+				canvasStore().ctx[id].translate(-configStore().navState.ofs.x, -configStore().navState.ofs.y) */
+				/* canvasStore().ctx[id].setTransform(scale, 0, 0, scale, 0, 0);
+				canvasStore().ctx[id].translate(-configStore().navState.ofs.x, -configStore().navState.ofs.y) */
+				//if (canvasRefs[id] == null || canvasRefs['img'] == null) return 
+				//let def = canvasRefs['img'].getContext('2d').getTransform()
+				//const ctx = canvasRefs[id].getContext('2d')
+				//ctx.setTransform(def.a, def.b, def.c, def.d, def.e, def.f);
+			}
+			
+			canvasStore().queue.push({event:'redraw', layer_id:null, source:'self'})
+		},
+		
+		
 	}
 })

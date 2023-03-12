@@ -2,7 +2,9 @@
 
 
 <template>
-	<div  v-show="!windowState.minimized">
+	<!-- weight:200px;height:200px;background-color: blanchedalmond; -->
+	<!-- width:fit-content;height: fit-content; -->
+	<div  v-show="!windowState.minimized" style="">
 		<div id="draggable-container" class="draggable-container"  @scroll="func.onScroll" 
 			style=""
 			@mousedown.passive="func.mouseDownContainer(windowState.id)"
@@ -53,8 +55,12 @@ import _ from 'lodash';
 
 const emit = defineEmits(["reset-zoom", "test-emit", 'close', 'onHolding', 'onRelease', 'minimize', 'maximize'])
 
-
+// :window_id="id"	window_id	props.divRef
 const props = defineProps({
+	window_id:{
+		required: false,
+		default: null,
+	},
 	divRef: {
 		required: false,
 		default: null,
@@ -89,12 +95,15 @@ const defaultStyle = {
 	container: {
 		maxHeight: '95vh',
 		borderRadius: '5px',
+		//width: 'fit-content',
+		
 	}, 
 	header: {
 		position: 'sticky', 
-		width: '100%',
+		//width: '100%',
 	},
 	body:{
+		//width: '100%',
 		alignItems:'left', 
 		alignContent: 'left'
 	}
@@ -175,8 +184,13 @@ const func = reactive(_.merge(defaultFunctions, props.functions))
 
 onBeforeMount(() => { })
 onMounted(() => { 
+	//await nextTick()
 	func.onMounted(divRef, windowState?.id)
 })
+/* onMounted(async () => { 
+	await nextTick()
+	func.onMounted(divRef, windowState?.id)
+}) */
 
 
 </script>
@@ -208,6 +222,8 @@ onMounted(() => {
 	overflow: auto;
 	resize: both;
 	box-shadow: 0px 0px 2px #ffffff;
+	/* direction: rtl; */
+
 }
 
 #draggable-header {

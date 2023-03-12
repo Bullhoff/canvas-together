@@ -69,7 +69,7 @@
 						
 					</li>
 				
-					<li v-else-if="typeof value == 'number' || !isNaN(value)" class="row">
+					<li v-else-if="typeof value == 'number' || !isNaN(value)" class="row" :title="(true) ? props.obj['$'+key]?.tooltip : null">
 						<div style="position:relative; padding-right:2ch;" v-if="!props.hideMess">
 							<label class="checkbox-container-autosave" :title="'includeInSaveAll: '+key" >
 							<input class="check-box-autosave" type="checkbox" :value="props.treeSettings[key].$includeInSaveAll" v-model="props.treeSettings[key].$includeInSaveAll" @change="onChange($event, key, value, 'includeInSaveAll')" > 
@@ -97,12 +97,12 @@
 							style="width:fit-content;padding:0; margin:0;" 	
 							:title="'Save value:  '+key+' = '+props.obj[key]" 
 							:disabled="value == props.defaults[key]"> &#128190; </button>
-
+						
 						{{key}} = <input type="number" :value="value" @change="onChange($event, key, value)" :class="[value != props.defaults[key] ? 'value-changed' : '']" />
 						
 					</li>
 					
-					<li v-else-if="typeof value == 'string'" style="display:flex;" class="row"  >
+					<li v-else-if="typeof value == 'string'" style="display:flex;" class="row" :title="(true) ? props.obj['$'+key]?.tooltip : null" >
 						<div style="position:relative; padding-right:2ch;" v-if="!props.hideMess">
 							<label class="checkbox-container-autosave" :title="'includeInSaveAll: '+key">
 							<input class="check-box-autosave" type="checkbox" :value="props.treeSettings[key].$includeInSaveAll" v-model="props.treeSettings[key].$includeInSaveAll" @change="onChange($event, key, value, 'includeInSaveAll')" > 
@@ -129,7 +129,8 @@
 							:title="'Save value:  '+key+' = '+props.obj[key]" 
 							:disabled="value == props.defaults[key]" >&#128190; </button>
 						{{key}} = <input type="text" :value="value" @change="onChange($event, key, value)" :class="[value != props.defaults[key] ? 'value-changed' : '']" /> 
-						
+						<!-- props.obj['$'+key]?.tooltip -->
+						<input type="color" v-if="key.includes('Color')" @change="onChange($event, key, value)"/>
 					</li>
 					
 
@@ -243,6 +244,7 @@ var pathLocal = reactive([])
 const refs = reactive({})
 
 function onChange(e, key, value, type) {
+	//return console.log('onChange', key, value, type, e?.target?.value)
 	let val = (e.target.type == 'checkbox') ? e.target.checked : e.target.value
 	console.log('onChange', e.target.value, key, value, type)
 	let emitObj = {

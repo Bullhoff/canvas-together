@@ -38,17 +38,20 @@ export default defineComponent({
 
 		const resObj = reactive({test1:null, test2:null})
 
-		
+		let options = {
+			canvasSize: [{text: 'Default'}, {text: '64x64'}, {text: '128x128'}, {text: '1000x1000'}],
+			picture: [{text:''}]
+		}
 		const inputFields = reactive({
 			file: '', 
 			fileName: '',
-
+			defaultSize: 'Default',
 			owner: `${configStore().user.username}`,
 			category: '',
 			group: '',
 
-			canvasName: '', 
-			layerName: `${conf.user.username}_default`, 
+			canvasName: `${conf.user.username}_canvas`, 
+			layerName: `${conf.user.username}_layer`, 
 			
 			/* accessList: reactive([
 				{username: 'Hans', access:'owner'}, 
@@ -69,6 +72,12 @@ export default defineComponent({
 			licenceAttribution: ``,
 			maxDrawSize: 10,
 		})
+		function onChange(e, val){
+			console.log(e.target?.value, val)
+			if(val == 'canvasSize'){
+				inputFields.defaultSize = e.target?.value
+			}
+		}
 
 		function fileSelected(e) {
 			console.log('fileSelected', e.target.files[0], e.target, e)
@@ -94,6 +103,7 @@ export default defineComponent({
 				picture_file: inputFields['fileName'],
 				owner: inputFields['owner'], 
 				accessList: inputFields.accessList, 
+				defaultSize: inputFields.defaultSize, 
 				licenceAttribution: inputFields.licenceAttribution, 
 			}))
 			let canvasProperties = await utils.axiosPost({ url: 'new-canvas', dataForm: dataForm })
@@ -106,6 +116,7 @@ export default defineComponent({
 			dataForm.append('properties', JSON.stringify({
 				canvas_name: inputFields['canvasName'],
 				background_type: background_type,
+				defaultSize: inputFields.defaultSize, 
 				//picture_file: inputFields['fileName'],
 				owner: inputFields['owner'], 
 				accessList: inputFields.accessList
@@ -119,6 +130,7 @@ export default defineComponent({
 					canvas_id: canvasStore().current.canvas_id,
 					layer_name: inputFields['layerName'], //'background', 
 					//canvas_id: inputFields['canvasName'], //canvasStore().current.canvas_id,
+					defaultSize: inputFields.defaultSize, 
 					type: 'draw',
 					owner: configStore().user.username, 
 					accessList: inputFields.accessListCanvas, 
@@ -133,6 +145,7 @@ export default defineComponent({
 			return properties
 		}
 		async function buttonSave(e){
+			if(!inputFields.canvasName) return
 			let properties
 			if(bool.radioParent == 'newParent' && bool.radioParentType == 'file') {
 				properties = await sendPictureSqlite()
@@ -167,7 +180,6 @@ export default defineComponent({
 
 		}
 
-
 		const styleGridColumn = (from=1, to=1) => `grid-column:${from}/${to};`
 
 		const radio = ({type='radio', style='', styleItem1='width:2ch;', name='', id='', label='', disabled=false}={}) => {return (
@@ -179,7 +191,7 @@ export default defineComponent({
 							}}
 						onChange={($event) => {
 							if($event.target.type == 'file') fileSelected($event)
-							if($event.target.id == 'sameParent') inputFields['canvasName'] = canvasStore().current.parent
+							if($event.target.id == 'sameParent') inputFields['canvasName'] = canvasStore().parentListComputed[canvasStore().current.canvas_id].canvas_name
 							console.log('onChange - ', $event.target.value, $event.target, bool, inputFields)
 						}}
 						disabled={disabled}/>
@@ -194,8 +206,21 @@ export default defineComponent({
 						}}
 						disabled={disabled}/>
 		)}
+		const selectList = (arr, list = [])=>{
+			for (let i = 0; i < arr.length; i++) {
+				if(!arr[i].text){
+					arr[i].text = ''
+					for (const [key, value] of Object.entries(arr[i])) {
+						//console.log('index', index)
+						arr[i].text += (arr[i].text=='') ? value : i==arr[i].length-1 ? value : ` - ${value}`
+					}
+				}
+				list.push(<option value={arr[i].username}>{arr[i].text}</option>)
+			}
+			return list
+		}
 		
-		var objTemplate = {active:'bool', username:'string', group_id:'string', access: ['owner','edit','view'], Clone: 'button', Remove: 'button'}	// , 'co-owner'
+		var objTemplate = {/* active:'bool', */ username:'string', /* group_id:'string', */ access: ['owner','edit','view'], Clone: 'button', Remove: 'button'}	// , 'co-owner'
 		var testList = reactive([
 			{username: 'Hans', access:'owner'}, 
 			{username: 'Hans2', access:'view'}, 
@@ -258,6 +283,14 @@ export default defineComponent({
 					{/* TEXT - Current Parent */}
 					{/* {text({style:styleGridColumn(1,11), text:canvasStore().current.parent})} */}
 					
+					{/* defaultSize */}
+					<p style='grid-column: 1 / 4;'>Default size</p>
+					<select disabled onchange={($event)=>onChange($event, 'canvasSize')} style="grid-column: 4/10;" title="This is the size that users will get scaled to when opening. Defaults to fit image or 1:1 depending on background.">
+						{selectList(options.canvasSize)}
+					</select>
+					{/* {input_field({style:'grid-column: 4/10;', type:'text', value:inputFields.defaultSize, id:'defaultSize', text:'defaultSize', 
+						disabled:false})} */}
+
 					{/* Owner */}
 					<p style='grid-column: 1 / 4;'>Owner</p>
 					{input_field({style:'grid-column: 4/10;', type:'text', value:inputFields.owner, id:'owner', text:'Owner', 
@@ -267,41 +300,51 @@ export default defineComponent({
 					<p style='grid-column: 1 / 4;'>Category</p>
 					{input_field({style:'grid-column: 4/10;', type:'text', value:inputFields.category, id:'category', text:'Category', 
 						disabled:true})}
-					<button style='grid-column: 10/10;' id='' onClick={($event)=>{}}>+</button>
+					{/* <button style='grid-column: 10/10;' id='' onClick={($event)=>{}}>+</button> */}
 
 					{/* Group */}
 					<p style='grid-column: 1 / 4;'>Group</p>
 					{input_field({style:'grid-column: 4/10;', type:'text', value:inputFields.group, id:'group', text:'Group', 
 						disabled:true})}
-					<button style='grid-column: 10/10;' id='' onClick={($event)=>{}}>+</button>
+					{/* <button style='grid-column: 10/10;' id='' onClick={($event)=>{}}>+</button> */}
 
 					{/* Parent Name */}	{/* style:'grid-column: 4/10;'+styleRequired */}
 					<p style='grid-column: 1 / 4;'>Canvas Name</p>
 					{input_field({style:'grid-column: 4/10;', type:'text', value:inputFields.canvasName, id:'canvasName', text:'Canvas Name', required:true, 
 						disabled:bool.radioParent=='sameParent'})}
-					<button style='grid-column: 10/10;' id='getCurrentcanvasName' onClick={($event)=>{inputFields.canvasName=canvasStore().current.parent}}>*</button>
+					{/* <button style='grid-column: 10/10;' id='getCurrentcanvasName' onClick={($event)=>{inputFields.canvasName=''}}>*</button> */}
 					
 					{/* Canvas Name */}	{/* style:'grid-column: 4/10;'+styleRequired */}
 					<p style='grid-column: 1 / 4;'>Layer Name</p>
 					{input_field({style:'grid-column: 4/10;', type:'text', value:inputFields.layerName, id:'layerName', text:'Layer Name', 
 						disabled:false})}
-					<button style='grid-column: 10/10;' id='getCurrentlayerName' onClick={($event)=>{inputFields.layerName=canvasStore().current.id}}>*</button>
+					{/* <button style='grid-column: 10/10;' id='getCurrentlayerName' onClick={($event)=>{inputFields.layerName=canvasStore().current.layer_id}}>*</button> */}
 
 					{/* Access List PARENT */}
-					<p style='grid-column: 1 / 4;'>Access List (Canvas)</p>
-					{input_field({style:'grid-column: 4/10;', type:'text', value:JSON.stringify(inputFields.accessList), id:'accessList', text:'Access List', 
-						disabled:bool.radioParent!='newParent'})}
-					<button style='grid-column: 10/10;' id='getCurrentlayerName' onClick={($event)=>onClick('accessListParent')}>*</button>
+					<p style='grid-column: 1 / 4;'>
+						Access List (Canvas) 
+						<span title="Role descriptions: \nowner: owner\nview: viewer\nedit: editor (currently same as view)\n">{String.fromCodePoint('0x2753')}</span>
+					</p>
+					<select style="grid-column: 4/10;" title="All usernames listed here gets access to this canvas. The roles (owner/edit/view) is not yet implemented and makes no impacy.\n* = everyone" 
+						disabled={bool.radioParent!='newParent'} >
+						{selectList(inputFields.accessList)}
+					</select>
+					<button style='grid-column: 10/10;' id='getCurrentlayerName' onClick={($event)=>onClick('accessListParent')} title="Modify canvas access list">*</button>
 						
 					{/* Access List CHILD */}
-					<p style='grid-column: 1 / 4;'>Access List (Layer)</p>
-					{input_field({style:'grid-column: 4/10;', type:'text', value:JSON.stringify(inputFields.accessListCanvas), id:'accessListCanvas', 
-						disabled:false})}
-					<button style='grid-column: 10/10;' id='getCurrentlayerName' onClick={($event)=>onClick('accessListChild')}>*</button>
+					<p style='grid-column: 1 / 4;'>
+						Access List (Layer) 
+						<span title="Role descriptions: \nowner: owner\nview: viewer\nedit: editor (currently same as view)\n">{String.fromCodePoint('0x2753')}</span>
+					</p> 
+					<select style="grid-column: 4/10;" title="All usernames listed here gets access to this layer. The roles (owner/edit/view) is not yet implemented and makes no impacy.\n* = everyone that has access to the canvas"
+						disabled={false}>
+						{selectList(inputFields.accessListCanvas)}
+					</select>
+					<button style='grid-column: 10/10;' id='getCurrentlayerName' onClick={($event)=>onClick('accessListChild')} title="Modify layer access list">*</button>
 					{/* Credit */}
 					<p style='grid-column: 1 / 4;' title='Enter credit attribution according to licence'>Licence attribution</p>
 					{input_field({style:'grid-column: 4/10;', type:'text', value:inputFields.licenceAttribution, id:'licenceAttribution', title: 'Enter credit attribution according to licence',
-						disabled:bool.radioParent!='newParent'})}
+						disabled:bool.radioParent!='newParent' || true})}
 
 					
 					<br />

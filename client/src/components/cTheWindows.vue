@@ -6,14 +6,26 @@
 		<component :is="Popup" :componentName="id" :text="someStore().list[id]?.text"/>
 	</div>
 	<div v-for="(window, id) in windowStore().windows"  :key="window.id" v-show="!windowStore().windows[id].minimized">
-		<Draggable  
+		<!-- <PizzaCompanion v-if="window.component == 'PizzaCompanion'"/> -->
+		<Popup v-if="window.component == 'Popup'" />
+
+		<Draggable2 v-else-if="window.component == 'PizzaCompanion'"
+			:window_id="id"
+			:divRef="windowStore().refs[id]"
+			:windowState="windowStore().windows[id]"
+			:functions="windowStore().func"
+			:propStyle="windowStore().draggableContent[id]?.propStyle"	>
+			<PizzaCompanion />
+		</Draggable2>
+		
+		<Draggable v-else
 			:divRef="windowStore().refs[id]"
 			:windowState="windowStore().windows[id]"
 			:functions="windowStore().func"
 			:propStyle="windowStore().draggableContent[id]?.propStyle"
-			:key="window.id"
+			
 		>
-		<template v-slot:header :key="window.id">
+		<template v-slot:header >
 			<template 
 				v-if="windowStore().draggableContent[id]?.head" 
 				v-for="(item, index) in windowStore().draggableContent[id]?.head"	>
@@ -49,6 +61,7 @@
 			</template>
 		</p>
 	</Draggable>
+	<!-- PizzaCompanion -->
 	</div>
 </div>
 
@@ -63,8 +76,9 @@ import SocketioService from './../socketio.service.js';
 import { canvasStore, styleStore, configStore, windowStore, refs, someStore } from "@/stores/store.js";
 import { defineComponent, onMounted, onBeforeMount, onUpdated, nextTick, ref, reactive, watch } from 'vue'
 //import socketioService from './../socketio.service.js';
-
+import PizzaCompanion from '@/components/cPizzaCompanion.vue'
 import Draggable from '@/components/cDraggable.vue'
+import Draggable2 from '@/components/cDraggable2.vue'
 import Popup from '@/components/cPopup.vue'
 
 import * as utils from './../utils.js'

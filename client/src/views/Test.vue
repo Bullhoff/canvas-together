@@ -86,10 +86,14 @@
 		<div style="display: inline-flex;">
 			<Svg.Button style="width:12ch; height:4ch;" @onClick="display.testCss =! display.testCss" :text="'TestCss'" :active="display.testCss"/>
 			<Svg.Button style="width:12ch; height:4ch;" @onClick="display.testCss2 =! display.testCss2" :text="'TestCss2'" :active="display.testCss2"/>
+			<Svg.Button style="width:12ch; height:4ch;" @onClick="display.testCss3 =! display.testCss3" :text="'TestCss3'" :active="display.testCss3"/>
 			<Svg.Button style="width:12ch; height:4ch;" @onClick="display.testCss3Tree =! display.testCss3Tree" :text="'TestCss3Tree'" :active="display.testCss3Tree"/>
 			<Svg.Button style="width:12ch; height:4ch;" @onClick="display.test0General =! display.test0General" :text="'Test0General'" :active="display.test0General"/>
 			<Svg.Button style="width:12ch; height:4ch;" @onClick="display.testCompiler =! display.testCompiler" :text="'TestCompiler'" :active="display.testCompiler"/>
 			<Svg.Button style="width:12ch; height:4ch;" @onClick="display.testRegex =! display.testRegex" :text="'TestRegex'" :active="display.testRegex"/>
+			<Svg.Button style="width:12ch; height:4ch;" @onClick="display.svg2 =! display.svg2" :text="'svg2'" :active="display.svg2"/>
+			<Svg.Button style="width:12ch; height:4ch;" @onClick="display.svg22 =! display.svg22" :text="'svg22'" :active="display.svg22"/>
+			<Svg.Button style="width:12ch; height:4ch;" @onClick="display.ContextMenuTest =! display.ContextMenuTest" :text="'ContextMenuTest'" :active="display.ContextMenuTest"/>
 		</div>
 
 		<!-- <div class="menu" style="display: inline-flex;">
@@ -99,16 +103,22 @@
 			<button @click="()=>display.testCompiler2 =! display.testCompiler2">TestCompiler2</button>
 			<button @click="()=>display.testRegex =! display.testRegex">TestRegex</button>
 		</div> -->
-
 		
-		<TestCss v-if="display.testCss"/>
-		<TestCss2 v-if="display.testCss2"/>
-		<TestCss3Tree v-if="display.testCss3Tree" />
-		<TestCompiler v-if="display.testCompiler"/>
-		<TestCompiler2 v-if="display.testCompiler2"/>
-		<Test0General v-if="display.test0General"/>
-		<TestRegex v-if="display.testRegex" />
-
+		<div style="position:relative; width:100%; height:95vh;">
+			<ContextMenu v-if="contextMenuStore().open" :init="contextMenuStore().prop"/>
+			<svg2 v-if="display.svg2" />
+			<svg22 v-if="display.svg22" />
+			<TestCss v-if="display.testCss"/>
+			<TestCss2 v-if="display.testCss2"/>
+			<TestCss3 v-if="display.testCss3"/>
+			<TestCss3Tree v-if="display.testCss3Tree" />
+			<TestCompiler v-if="display.testCompiler"/>
+			<TestCompiler2 v-if="display.testCompiler2"/>
+			<Test0General v-if="display.test0General"/>
+			<TestRegex v-if="display.testRegex" />
+			<ContextMenuTest v-if="display.ContextMenuTest"/>
+		</div>
+		
 		
 		
 		
@@ -123,13 +133,20 @@
 
 <script setup>
 
+import { canvasStore, styleStore, configStore, contextMenuStore } from "@/stores/store.js";
+import ContextMenu from '@/components/cContextMenu.vue'
 import TestCss from './../components/test/cTestCss.vue'
 import TestCss2 from './../components/test/cTestCss2.vue'
+import TestCss3 from './../components/test/cTestCss3.vue'
 import TestCss3Tree from './../components/test/cTestCss3Tree.vue'
 import TestCompiler from './../components/test/cTestCompiler.vue'
 import TestCompiler2 from './../components/test/cTestCompiler2.vue'
 import Test0General from './../components/test/cTest0General.vue'
 import TestRegex from './../components/test/cTestRegex.vue'
+import svg2 from './../components/test/svg2.vue'
+import svg22 from './../components/test/svg22.vue'
+import ContextMenuTest from './../components/test/ContextMenuTest.vue'
+
 import * as Svg from './../components/cSvg.vue'
 
 
@@ -147,10 +164,14 @@ import * as utils from "./../utils.js"
 const display = reactive({
 	testCss: false, 
 	testCss2: false, 
+	testCss3: false, 
 	testCss3Tree: false, 
 	testCompiler: false, 
 	test0General: false, 
-	testRegex: false
+	testRegex: false,
+	svg2: false, 
+	svg22: false, 
+	ContextMenuTest: false
 })
 
 function testFunction(e){

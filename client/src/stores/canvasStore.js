@@ -3,6 +3,7 @@ import { defineStore } from 'pinia';
 import * as utils from './../utils.js'
 import c from './../constants.js'
 import { configStore, store, refs } from './store';
+import { findIndex } from 'lodash';
 //import { arrayBuffer } from 'stream/consumers';
 
 
@@ -14,6 +15,7 @@ function setUrl({picture=true,canvas=true,owner=true}={}){
 }
 
 export const canvasStore = defineStore('canvas', {
+	
 	state:() => {
 		const canvasOrder = reactive([])
 		//const canvasOrder = computed(() =>[])
@@ -41,6 +43,7 @@ export const canvasStore = defineStore('canvas', {
 				'a','b','c','d','eeee'
 			],
 			state: reactive({
+				loading: false, 	// 		(canvas)redraw		(utils)fetchPicture		(canvasStore)changeCanvas	
 				currentFocus: null,
 				sizeCanvas: {w:window.innerWidth, h: window.innerHeight},
 				click: {x0: 0, y0:0, x: 0, y:0},
@@ -98,16 +101,16 @@ export const canvasStore = defineStore('canvas', {
 	actions: {
 		moveCanvasPrio({layer_id='', direction='up'}={}){
 			let change = (direction=='up') ? -1 : +1
-			//let index = this.canvasOrder.indexOf(canvas_id)
-			var index = this.canvasOrder.findIndex(item => item.layer_id == layer_id);
+			//let index = canvasStore().canvasOrder.indexOf(canvas_id)
+			var index = canvasStore().canvasOrder.findIndex(item => item.layer_id == layer_id);
 			if(index+change < 0 || index+change > this.canvasOrder.length) return
-			const clone = this.canvasOrder[index]
-			this.canvasOrder.splice(index, 1);
-			this.canvasOrder.splice(index+change, 0, clone);
+			const clone = canvasStore().canvasOrder[index]
+			canvasStore().canvasOrder.splice(index, 1);
+			canvasStore().canvasOrder.splice(index+change, 0, clone);
 			//this.canvasOrder.splice(index+change, 0, layer_id);
-			for (let i = 0; i < this.canvasOrder.length; i++) {
-				console.log('*', i,layer_id, this.canvasOrder, this.canvasState)
-				this.canvasState[this.canvasOrder[i].layer_id].style.zIndex = i+1
+			for (let i = 0; i < canvasStore().canvasOrder.length; i++) {
+				console.log('*', i,layer_id, canvasStore().canvasOrder, canvasStore().canvasState)
+				canvasStore().canvasState[canvasStore().canvasOrder[i].layer_id].style.zIndex = i+1
 			}
 		},
 		addPointToHistory({ layer_id=this.current.layer_id, canvas_id=this.current.canvas_id, strokeIndex=null, point={type:null} } = {}) {
@@ -118,19 +121,19 @@ export const canvasStore = defineStore('canvas', {
 				
 			}
 			
-			if(_canvas_id != this.current.canvas_id) return
-			if(!this.canvasHistory[_layer_id]) this.canvasHistory[_layer_id] = []
-			if(!this.canvasHistory[_layer_id][strokeIndex]) this.canvasHistory[_layer_id][strokeIndex] = {}
-			this.canvasHistory[_layer_id][strokeIndex] = point
+			if(_canvas_id != canvasStore().current.canvas_id) return
+			if(!canvasStore().canvasHistory[_layer_id]) canvasStore().canvasHistory[_layer_id] = []
+			if(!canvasStore().canvasHistory[_layer_id][strokeIndex]) canvasStore().canvasHistory[_layer_id][strokeIndex] = {}
+			canvasStore().canvasHistory[_layer_id][strokeIndex] = point
 		}, 
-		addStrokeToHistory({ canvas_id=this.current.canvas_id, layer_id=this.current.layer_id, strokeIndex=null, arr=[] } = {}) {
+		addStrokeToHistory({ canvas_id=canvasStore().current.canvas_id, layer_id=canvasStore().current.layer_id, strokeIndex=null, arr=[] } = {}) {
 			let _layer_id = layer_id
 			let _canvas_id = canvas_id
 			//console.log('this.canvasHistory', this.canvasHistory, canvasStore().canvasHistory, this.current.canvas_id, _canvas_id, _layer_id)
-			if(_canvas_id != this.current.canvas_id) return
-			else if(!this.canvasHistory[_layer_id]) this.canvasHistory[_layer_id] = []
-			if(!strokeIndex) this.canvasHistory[_layer_id].push(arr)
-			else this.canvasHistory[_layer_id][strokeIndex] = arr
+			if(_canvas_id != canvasStore().current.canvas_id) return
+			else if(!canvasStore().canvasHistory[_layer_id]) canvasStore().canvasHistory[_layer_id] = []
+			if(!strokeIndex) canvasStore().canvasHistory[_layer_id].push(arr)
+			else canvasStore().canvasHistory[_layer_id][strokeIndex] = arr
 		}, 
 		removeStrokeFromHistory(obj) {
 			let { canvas_id, layer_id, strokeIndex } = obj;
@@ -145,29 +148,29 @@ export const canvasStore = defineStore('canvas', {
 		addCanvas(argObj){
 			let obj = {
 				...{
-					id:this.current.layer_id,
-					canvas_id:this.current.canvas_id, 
-					layer_id:this.current.layer_id, 
+					id:canvasStore().current.layer_id,
+					canvas_id:canvasStore().current.canvas_id, 
+					layer_id:canvasStore().current.layer_id, 
 					arr:[], 
 					properties:{},
 				},
 				...argObj
 			}
 			let {layer_id, properties, arr} = obj
-			//if(parent != this.current.canvas_id) return
-			this.canvasHistory[layer_id] = arr
-			this.canvasList[layer_id] = properties
-			this.canvasRefs[layer_id] = null
-			//this.canvasOrder.push(_layer_id)
-			//this.canvasOrder.push({layer_id:layer_id, layer_name})
-			this.canvasOrder.push(properties)
-			this.setCanvasState(layer_id)
-			this.queue.push({
+			//if(parent != canvasStore().current.canvas_id) return
+			canvasStore().canvasHistory[layer_id] = arr
+			canvasStore().canvasList[layer_id] = properties
+			canvasStore().canvasRefs[layer_id] = null
+			//canvasStore().canvasOrder.push(_layer_id)
+			//canvasStore().canvasOrder.push({layer_id:layer_id, layer_name})
+			canvasStore().canvasOrder.push(properties)
+			canvasStore().setCanvasState(layer_id)
+			canvasStore().queue.push({
 				event: 'newCanvas',
 				layer_id: layer_id
 			})
 		}, 
-		async removeParent({ canvas_id=this.current.canvas_id, layer_id=this.current.layer_id } = {}) {
+		async removeParent({ canvas_id=canvasStore().current.canvas_id, layer_id=canvasStore().current.layer_id } = {}) {
 			if(canvas_id == canvasStore().current.canvas_id){
 				canvasStore().current.canvas_id = null//'Start'
 				canvasStore().current.layer_id = null//''
@@ -177,38 +180,38 @@ export const canvasStore = defineStore('canvas', {
 			if(index != -1) canvasStore().parentList.splice(index,1)//delete canvasStore().parentList[index]
 			canvasStore().changeParent()
 		},
-		removeCanvas({ canvas_id=this.current.canvas_id, layer_id=this.current.layer_id } = {}) {
+		removeCanvas({ canvas_id=canvasStore().current.canvas_id, layer_id=canvasStore().current.layer_id } = {}) {
 			//let _layer_id = canvas_id ? canvas_id : layerId
 			//let _canvas_id = parent_id ? parent_id : parent
-			//console.log('0-store.removeCanvas', parent, layerId, this.canvasRefs)
-			if(canvas_id != this.current.canvas_id) return
-			else if(!this.canvasHistory[layer_id]) return
-			delete this.canvasHistory[layer_id];	// Delete Canvas
-			delete this.canvasList[layer_id];
-			delete this.canvasRefs[layer_id]
-			delete this.canvasState[layer_id]
-			var index = this.canvasOrder.findIndex(item => item.layer_id == layer_id);
+			//console.log('0-store.removeCanvas', parent, layerId, canvasStore().canvasRefs)
+			if(canvas_id != canvasStore().current.canvas_id) return
+			else if(!canvasStore().canvasHistory[layer_id]) return
+			delete canvasStore().canvasHistory[layer_id];	// Delete Canvas
+			delete canvasStore().canvasList[layer_id];
+			delete canvasStore().canvasRefs[layer_id]
+			delete canvasStore().canvasState[layer_id]
+			var index = canvasStore().canvasOrder.findIndex(item => item.layer_id == layer_id);
 			//if(index != -1) delete this.canvasOrder[index]
-			if(index != -1) this.canvasOrder.splice(index,1)
-			if(layer_id == this.current.layer_id) {
+			if(index != -1) canvasStore().canvasOrder.splice(index,1)
+			if(layer_id == canvasStore().current.layer_id) {
 				canvasStore().historyTemp = []
-				this.current.layer_id = utils.getStartPoint({obj:this.canvasList})
+				canvasStore().current.layer_id = utils.getStartPoint({obj:canvasStore().canvasList})
 				setUrl({picture:false,owner:false})
-				//this.current.layer_id
+				//canvasStore().current.layer_id
 			}
 		}, 
-		setCanvasState(layer_id, zIndex=Object.keys(this.canvasState).length){
+		setCanvasState(layer_id, zIndex=Object.keys(canvasStore().canvasState).length){
 			// configStore().general.hideLayersNotOwnedBySelf
 			let va = configStore().general
 			console.log('setCanvasState', va.hideLayersLongerThan)
 			let hidden = (
-				(va.hideStartPageLayersByDefault && this.current.canvas_id == 'Canvas' && (layer_id != 'Layer' || layer_id != 'users')) || 
+				(va.hideStartPageLayersByDefault && canvasStore().current.canvas_id == 'Canvas' && (layer_id != 'Layer' || layer_id != 'users')) || 
 				(va.hideLayersByDefault) ||
 				(va.hideLayersNotOwnedBySelf && canvasStore().canvasList[layer_id].owner != configStore().user.username) || 
 				(va.hideLayersLongerThan && canvasStore().canvasHistory[layer_id].length > va.hideLayersLongerThan)
 				) ? true : false
 
-			this.canvasState[layer_id] = reactive({
+			canvasStore().canvasState[layer_id] = reactive({
 				style: { zIndex: zIndex, },	
 				listStyle: {},
 				grayed: false,
@@ -239,6 +242,7 @@ export const canvasStore = defineStore('canvas', {
 			}
 		},
 		async initCanvasPage(){
+			canvasStore().state.loading = 'initCanvasPage'
 			let res = await utils.axiosGet({ url: 'getParents', obj:{username: configStore().user.username}, whoSentYou: `initCanvasPage` })
 			await this.clearOld([canvasStore().parentList])
 			store().msg({initCanvasPage_clearOld: {parentList: canvasStore().parentList}})
@@ -255,6 +259,8 @@ export const canvasStore = defineStore('canvas', {
 			canvasStore().changeParent({canvas_id, layer_id})
 		},
 		async changeParent({canvas_id=canvasStore().current.canvas_id, layer_id=canvasStore().current.layer_id} = {}) {
+			canvasStore().state.loading = 'Changing canvas'
+			store().debugObj.COUNT.changeParent += 1
 			//utils.printBrowser({text: `changeParent.... canvas_id: ${canvas_id},          layer_id:${layer_id}`})
 			store().msg({changeParentStart: {canvas_id, layer_id}})
 			canvasStore().current.canvas_id=canvas_id
@@ -273,7 +279,7 @@ export const canvasStore = defineStore('canvas', {
 			store().msg({parentList: canvasStore().parentList})
 			
 			
-			canvasStore().canvasList['users'] = {layer_id: 'users', layer_name: 'users', type: 'users', owner: 'God'}
+			canvasStore().canvasList['users'] = {id:"id" ,layer_id: 'users', layer_name: 'users', canvas_id: canvasStore().current.canvas_id, type: 'users', owner: 'God', date_created:'', date_updated:''}
 			canvasStore().canvasHistory['users'] = [[{type:'cursor', user:configStore().user.username}]]
 
 			canvasStore().historyTemp = []
@@ -310,19 +316,24 @@ export const canvasStore = defineStore('canvas', {
 			store().msg({canvasHistory: canvasStore().canvasHistory})
 
 			for (const key of Object.keys(canvasStore().canvasList)) {
-				this.setCanvasState(key)
+				await canvasStore().setCanvasState(key)
 			}
+			store().msg({canvasState: canvasStore().canvasState})
 
 			canvasStore().state.sizeCanvas.w = window.innerWidth
 			canvasStore().state.sizeCanvas.h = window.innerHeight
-
-			
-			if (canvasStore().parentListComputed[canvasStore().current.canvas_id]?.background_type == 'picture_file')
-				canvasStore().currentPicture.src = await utils.fetchPicture({ pictureFile: canvasStore().parentListComputed[canvasStore().current.canvas_id].file_path })
+			let index = canvasStore().parentList.findIndex((x)=>x.canvas_id == canvasStore().current.canvas_id)
+			//console.log('***', index, canvasStore().current.canvas_id, canvasStore().parentList[index]?.canvas_id, canvasStore().parentList[index]?.background_type, canvasStore().parentList[index]?.background_type == 'picture_file')
+			await nextTick()
+			if (index != -1 && canvasStore().parentList[index]?.background_type == 'picture_file')
+				canvasStore().currentPicture.src = await utils.fetchPicture({ pictureFile: canvasStore().parentList[index].file_path })
+			//if (canvasStore().parentListComputed[canvasStore().current.canvas_id]?.background_type == 'picture_file')
+				//canvasStore().currentPicture.src = await utils.fetchPicture({ pictureFile: canvasStore().parentListComputed[canvasStore().current.canvas_id].file_path })
+				//	canvasStore().currentPicture.src = await utils.fetchPicture({ pictureFile: canvasStore().parentList[canvasStore().current.canvas_id].file_path })
 			else
 				await refs().TheZoom?.resetZoom()
 			
-
+			//console.log('***refs().TheZoom',refs().TheZoom)
 			setUrl()
 			store().setTitle()
 			store().msg({canvasRefs: canvasStore().canvasRefs})

@@ -25,8 +25,9 @@ import { canvasStore, styleStore, configStore, windowStore } from "@/stores/stor
 import * as utils from '../utils.js'
 //import c from './../constants.js';
 /* Virtual script not found, may missing <script lang="ts"> / "allowJs": true / jsconfig.json.volar */
-import { defineComponent, watch, toRefs, toRef, watchEffect, onMounted, onBeforeMount, onBeforeUnmount, onUpdated, nextTick, ref, reactive, defineExpose  } from 'vue'
+import { defineComponent, watch, toRefs, toRef, watchEffect, onMounted, onBeforeMount, onBeforeUnmount, onUpdated, nextTick, ref, reactive  } from 'vue'
 import SocketioService from '../socketio.service.js';
+import { store } from "../stores/store";
 
 //expose({ resetZoom })
 defineExpose({ resetZoom });
@@ -66,11 +67,7 @@ function setDefaultScale ({scale=null,width=canvasStore().currentPicture.width, 
 //watchEffect(async () => {})
 //watch(() => (canvasses.current.canvas_id), async (parent) => {}) */
 
-
-function mouseEvent(e) {
-	//return
-	if (canvasses.current.layer_id == null) return //console.log('No Canvas Selected.')
-	var newCoords = ({ purpose = 'draw' } = {}) => {
+var newCoords = ({ e,purpose = 'draw' } = {}) => {
 		const rect = canvasRefs[canvasses.current.layer_id]?.getBoundingClientRect()
 		let round = configStore().toolState.roundPencilDraw 
 		canvasStore().state.click.x0 = canvasStore().state.click.x
@@ -79,23 +76,21 @@ function mouseEvent(e) {
 		canvasStore().state.click.y = round ? Math.round((e.clientY - rect?.top) / configStore().navState.scale) : (e.clientY - rect?.top) / configStore().navState.scale
 
 		if (purpose == 'draw') {
+			//console.log('hm', purpose)
 			canvasStore().state.click.x += round ? Math.round(configStore().navState.ofs.x) : configStore().navState.ofs.x
 			canvasStore().state.click.y += round ? Math.round(configStore().navState.ofs.y) : configStore().navState.ofs.y
 		}
-	}
-	if (e.type == 'dblclick') {
-		zoomHandler(e, configStore().navigation.doubleClickZoomIntensity)
-	}
-	else if (e.type == 'mousedown') {		// MOUSEDOWN
-		canvasStore().state.holding = true
+}
+function onMouseDown(e){
+	canvasStore().state.holding = true
 		if (e.buttons == 1 && configStore().toolState.toolActive != 'nav') {		// 		mousedown. Left mouse.			
 			canvasStore().canvasState.currentlyDrawing = true;
-			newCoords({ purpose: 'draw' })
+			newCoords({ e, purpose: 'draw' })
 			canvasStore().queue.push({event:'drawPoint', type: 'dot', emit:true, source:'self' })
 		}
 		else if (e.buttons == 4 || (e.buttons == 1 && conf.toolState.toolActive == 'nav')) {	// 	mousedown. Middle mouse.	
 			canvasStore().state.currentlyDragging = true;
-			newCoords({ purpose: 'translate' })
+			newCoords({ e, purpose: 'translate' })
 		}
 		else if (e.buttons == 2) {	// 	mousedown. Right mouse.		
 			if (canvasStore().state.holding) {
@@ -105,48 +100,85 @@ function mouseEvent(e) {
 			}
 			console.log('Rightclick')
 		}
-	}
-	else if (e.type == 'mouseup') {	// MOUSEUP
-		windowStore().current.activeWindow = null
-		windowStore().current.holding = false
-		/* windowStore().login.holding = false;
-		windowStore().createNew.holding = false;
-		windowStore().unicode.holding = false;
-		windowStore().testOutput.holding = false; */
+}
 
+function onMouseUp(e){
+	windowStore().current.activeWindow = null
+		windowStore().current.holding = false
 		canvasStore().state.currentlyDrawing = false;
 		canvasStore().state.currentlyDragging = false;
-		//holding = false
+
+		if(canvasses.historyTemp[0]?.type == 'lineTo' || canvasses.historyTemp[1]?.type == 'lineTo' || canvasses.historyTemp[2]?.type == 'lineTo'){
+			let tempArray = []
+			let tempAttr = null
+			let tempSum = 0
+			canvasses.historyTemp = canvasses.historyTemp.reduce((accumulator, currentValue, i)=>{
+				let {type, x,y,x1,x2,y1,y2,color,size,w,h, layer_id} = currentValue
+				//console.log('currentValue', currentValue.type, currentValue, i, canvasses.historyTemp.length, i == canvasses.historyTemp.length-1)
+				if(currentValue.type != 'lineTo') return accumulator
+				
+				if(!tempAttr){
+					tempAttr = {type, color, size, } // layer_id	// color,size,x1,x2,y1,y2, layer_id
+					tempArray = []
+					return accumulator
+				}
+				if(currentValue.type == 'lineTo' && i == canvasses.historyTemp.length-1) {
+					let res = [...accumulator ,  {...tempAttr, ...{arr: [...tempArray]} }]
+					tempAttr = null
+					return res
+				}
+				else if(currentValue.type == 'lineTo'){
+					let sum = x1 + x2 + y1 + y2
+					//if(sum!=tempSum)
+					//if(Math.round(sum) != Math.round(tempSum))
+						tempArray.push({x1,y1 , x2,y2})
+					tempSum = sum
+					return accumulator
+				}
+			}, [])
+		}
+
 		canvasStore().state.holding = false
-		if (canvasses.historyTemp != [] || !canvasses.historyTemp || canvasses.historyTemp != null || canvasses.historyTemp != undefined) {
-			if (canvasses.current.layer_id && true ) {
+		if (canvasStore().historyTemp != [] || !canvasStore().historyTemp || canvasStore().historyTemp != null || canvasStore().historyTemp != undefined) {
+			if (canvasStore().current.layer_id && true ) {
 				SocketioService.socket.emit('stroke:add', {
-					canvas_id: canvasses.current.canvas_id,
-					layer_id: canvasses.current.layer_id,
-					arr: canvasses.historyTemp,
-					strokeIndex: canvasses.canvasHistory[canvasses.current.layer_id]?.length
+					canvas_id: canvasStore().current.canvas_id,
+					layer_id: canvasStore().current.layer_id,
+					arr: canvasStore().historyTemp,
+					//strokeIndex: canvasses.canvasHistory[canvasses.current.layer_id]?.length, 
+					strokeIndex: (canvasStore().canvasHistory[canvasStore().current.layer_id]?.at(-1)?.strokeIndex) ? canvasStore().canvasHistory[canvasStore().current.layer_id]?.at(-1)?.strokeIndex : canvasStore().canvasHistory[canvasStore().current.layer_id]?.length, 
+					strokeId:''
 				})
-				canvasses.historyTemp = []
+				canvasStore().historyTemp = []
 			}
 		}
-	}
-	else if (e.type == 'mousemove') {	// MOUSEMOVE
-		//return
-		if(windowStore().func.mouseMove(e)) return
+}
+
+var lastMove = [Date.now()] //new Date().getSeconds()
+function onMouseMove(e){
+	//return
+	if(windowStore().func.mouseMove(e)) return
 		if (!canvasStore().state.holding && (configStore().cursor.display)) {
-			newCoords({ purpose: 'draw' })
+			newCoords({ e, purpose: 'draw' })
 			canvasStore().queue.push({event:'drawPoint', type: 'cursor', emit:true, source:'self' })
 		}
 
 		if (canvasStore().state.holding && e.buttons == 1 /* && conf.toolState.toolActive != 'nav' */ && (conf.toolState.toolActive == 'pencil' || conf.toolState.toolActive == 'eraser')) {
 			canvasStore().state.currentlyDrawing = true
-			newCoords({ purpose: 'draw' })
+			newCoords({ e, purpose: 'draw' })
 			emit('draw', { x:0, y:0, type: 'line' })
 
 		}
 		else if (canvasStore().state.holding && (e.buttons == 4 || (e.buttons == 1 && conf.toolState.toolActive == 'nav'))) {
+			lastMove[1] = Date.now()
+			if(lastMove[1] > lastMove[0] + configStore().navigation.dragDelay_ms) 
+				lastMove[0] = Date.now()
+			 else
+				return
+			
+			
 			canvasStore().state.currentlyDragging = true;
-			newCoords({ purpose: 'translate' })
+			newCoords({ e, purpose: 'translate' })
 
 			configStore().navState.ofs.x -= canvasStore().state.click.x - canvasStore().state.click.x0
 			configStore().navState.ofs.y -= canvasStore().state.click.y - canvasStore().state.click.y0
@@ -164,20 +196,10 @@ function mouseEvent(e) {
 		else if (canvasStore().state.holding && e.buttons == 8) { // redo
 			console.log('Redo', e)
 		}
+}
 
-	}
-	else if (e.type == 'mouseenter') {	// MOUSEENTER
-		//insideCanvas = true
-	}
-	else if (e.type == 'mouseleave') {	// MOUSELEAVE
-		//insideCanvas = false
-	}
-	else if (e.type == 'wheel' && !canvasStore().state.holding) {	// WHEEL
-		var zoom = Math.exp(configStore().navigation.scrollZoomIntensity * (e.deltaY < 0 ? 1 : -2));
-		zoomHandler(e, zoom)
-	}
-	else if (e.type == 'keydown') {		// KEYDOWN
-		let move = {}
+function onKeyboard(e){
+	let move = {}
 		if (e.code == 'Escape') { }
 		else if (e.code == 'Backspace' || e.code == 'Delete') {
 			if(canvasses.canvasHistory[canvasses.current.layer_id].length < 1) return
@@ -217,6 +239,36 @@ function mouseEvent(e) {
 			canvasStore().queue.push({event:'redraw', layer_id:null, source:'self'})
 
 		}
+}
+
+function mouseEvent(e) {
+	//return
+	if (canvasses.current.layer_id == null) return //console.log('No Canvas Selected.')
+	
+	if (e.type == 'dblclick') {
+		zoomHandler(e, configStore().navigation.doubleClickZoomIntensity)
+	}
+	else if (e.type == 'mousedown') {		// MOUSEDOWN
+		onMouseDown(e)
+	}
+	else if (e.type == 'mouseup') {	// MOUSEUP
+		onMouseUp(e)
+	}
+	else if (e.type == 'mousemove') {	// MOUSEMOVE
+		onMouseMove(e)
+	}
+	else if (e.type == 'mouseenter') {	// MOUSEENTER
+		//insideCanvas = true
+	}
+	else if (e.type == 'mouseleave') {	// MOUSELEAVE
+		//insideCanvas = false
+	}
+	else if (e.type == 'wheel' && !canvasStore().state.holding) {	// WHEEL
+		var zoom = Math.exp(configStore().navigation.scrollZoomIntensity * (e.deltaY < 0 ? 1 : -2));
+		zoomHandler(e, zoom)
+	}
+	else if (e.type == 'keydown') {		// KEYDOWN
+		onKeyboard(e)
 	}
 
 }
@@ -246,6 +298,7 @@ function zoomHandler(e, zoom) {
 }
 
 function resetZoom({x=0, y=0, mode=null}={}, scale=null) {
+	store().msg({text: 'resetZoom'})
 	for (const id of Object.keys(canvasStore().canvasRefs)) {
 		const ctx = canvasStore().canvasRefs[id].getContext('2d')
 
@@ -276,6 +329,8 @@ function resetZoom({x=0, y=0, mode=null}={}, scale=null) {
 			} 
 			configStore().navState.ofs.x = center.x
 			configStore().navState.ofs.y = center.y
+			/* configStore().navState.ofs.x = 1
+			configStore().navState.ofs.y = 1 */
 
 			//utils.printBrowser({text: canvasStore().currentPicture.width*configStore().navState.scale})
 		}

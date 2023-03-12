@@ -2,7 +2,7 @@
 <template>
 	<div style="position:absolute; width:auto; height:auto;  " @mouseup="onMouseUp" @mousemove="onMouseMove" @mouseleave="onMouseLeave" @click="()=>store().setStatusMessage({text: 'You have to close the arrow windows to draw. ', popups: []})">
 		
-		<div style="position:absolute;" :style="svg.divContainer" >
+		<div style="position:absolute; pointer-events: none;" :style="svg.divContainer" >
 			
 			<svg  
 				:viewBox="svg.container.viewBox"
@@ -15,8 +15,11 @@
 				<feDropShadow dx="2" dy="2" stdDeviation="3" flood-opacity="0.5"/>
 			</filter>
 
-				<defs>
+				<defs >
 					<marker 
+					style="pointer-events: all;"
+					@mouseleave="onMouse('leave')"
+				 	@mouseenter="onMouseEnter('enter')"
 						:id="'arrow_'+props.componentName"
 						:viewBox="svg.arrow.viewBox"
 						:preserveAspectRatio="svg.arrow.preserveAspectRatio"
@@ -37,6 +40,9 @@
 
 				
 				<line class="line" 
+					style="pointer-events: all;"
+					@mouseleave="onMouse('leave')"
+				 	@mouseenter="onMouseEnter('enter')"
 					:viewBox="svg.line.viewBox"
 					:x1="svg.line.x1"
 					:y1="svg.line.y1"
@@ -52,10 +58,11 @@
 		</div>
 
 		<div :ref="(el)=>(someStore().activePopups[props.componentName]) ? someStore().activePopups[props.componentName].ref=el : ''" class="container prevent-select" @mousedown="onMouseDown" 
-			style="z-index: 1;"
+			style="z-index: 1; pointer-events: all;"
 			@contextmenu.prevent="onContextMenu"
 			 @mouseleave="onMouse('leave')"
 			 @mouseenter="onMouseEnter('enter')"
+			 
 			>	
 			
 			<div style="position: absolute;  background-color:chocolate; right:1px;top:1px;  width:3ch;height:3ch;  font-size:0.5ch;text-align:center; border-radius: 5px;" @click="onClose()">

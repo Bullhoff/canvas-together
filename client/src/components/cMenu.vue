@@ -3,20 +3,41 @@
 	<!-- <div id="menu-container" style="z-index:9999"> -->
 		<!-- style="z-index:1;" -->
 		<div id="menu-container" >
-			<div style="display:inline; width:fit-content;" :ref="(el)=>someStore().list.newCanvas.ref=el">
+			
+
+			<span title="Create new canvas or layer">
+				<div style="display:inline; width:fit-content;" :ref="(el)=>someStore().list.newCanvas.ref=el">
+					<Svg.Button style="width:3ch; height:3ch;" 
+						@onClick="windowStore().createNewOrUnminimize({component:'TheFormCreate'})" 
+						@click.middle="windowStore().createNewWindow({component:'TheFormCreate'})"
+						@contextmenu.prevent="contextMenu($event, ['create', 'modify', 'overview'])"
+						:amountBadge="windowStore()?.windowListComponentKey['TheFormCreate']"
+						:text="'&#x2795;'"  />
+				</div>
+			</span>
+
+			<!-- <Suspense> 
+				<template #fallback>
+					Loading...
+				</template>
+			</Suspense> -->
+			<!-- <div style="display:inline; width:fit-content;" :ref="(el)=>someStore().list.newCanvas.ref=el">
 				<Svg.Button style="width:3ch; height:3ch;" 
 					@onClick="windowStore().createNewOrUnminimize({component:'TheFormCreate'})" 
 					@click.middle="windowStore().createNewWindow({component:'TheFormCreate'})"
 					:amountBadge="windowStore()?.windowListComponentKey['TheFormCreate']"
 					:text="'&#x2795;'"  />
-			</div>
-			<div style="display:inline;" :ref="(el)=>someStore().list.edit.ref=el">
-				<Svg.Button style="width:3ch; height:3ch;" 
-					@onClick="windowStore().createNewOrUnminimize({component:'TheFormModify'})" 
-					@click.middle="windowStore().createNewWindow({component:'TheFormModify'})"
-					:amountBadge="windowStore()?.windowListComponentKey['TheFormModify']"
-					:text="'&#x1f511;'"  />
-			</div>
+			</div> -->
+			<span title="Modify">
+				<div style="display:inline;" :ref="(el)=>someStore().list.edit.ref=el">
+					<Svg.Button style="width:3ch; height:3ch;" 
+						@click.left="windowStore().createNewOrUnminimize({component:'TheFormModify'})" 
+						@click.middle="windowStore().createNewWindow({component:'TheFormModify'})"
+						@contextmenu.prevent="contextMenu($event, ['create', 'modify', 'overview'])"
+						:amountBadge="windowStore()?.windowListComponentKey['TheFormModify']"
+						:text="'&#x1f511;'"  />
+				</div>
+			</span>
 					
 		<div class="menu-group">
 			<div style="display:inline;" :ref="(el)=>someStore().list.canvas.ref=el">
@@ -62,41 +83,50 @@
 		</div>
 
 		<div class="cursor-default menu-group" style="display:inline-block; " @contextmenu.prevent="" title="Reset Zoom">
-			<Svg.Button style="width:3ch; height:3ch;"  :text="'🔍'" :active="false" @contextmenu.prevent="contextMenu($event)"
+			<Svg.Button style="width:3ch; height:3ch;"  :text="'🔍'" :active="false" @contextmenu.prevent="contextMenu($event, 'scale')"
 				@onClick="canvasStore().queue.push({event:'resetZoom'})" 
 				:propStyle="{default:{rect:{fill:'none'}}, highlight:{rect:{fill:'yellow'}}}" />
 		</div>
 		
 		
 		<div class="cursor-default menu-group" style="display:inline-block; " @contextmenu.prevent=""  :ref="(el)=>someStore().list.tools.ref=el">
-			<Svg.Button style="width:3ch; height:3ch;"  :text="'&#x270a;'" :active="conf.toolState.toolActive=='nav'" :class="{ highlighted: conf.toolState.toolActive == 'nav', notHighlighted: conf.toolState.toolActive != 'nav' }" 
-				@onClick="conf.toolState.toolActive = 'nav'" 
-				:propStyle="{default:{rect:{fill:'none'}}, highlight:{rect:{fill:'yellow'}}}" />
-			<Svg.Button style="width:3ch; height:3ch;"  :text="'&#x270f;&#xfe0f;'" :active="conf.toolState.toolActive=='pencil'" :class="{ highlighted: conf.toolState.toolActive == 'pencil', notHighlighted: conf.toolState.toolActive != 'pencil' }" 
-				@onClick="conf.toolState.toolActive = 'pencil'" 
-				:propStyle="{default:{rect:{fill:'none'}}, highlight:{rect:{fill:'yellow'}}}" />
-			<Svg.Button style="width:3ch; height:3ch;"  :text="'&#9003;'" :active="conf.toolState.toolActive=='eraser'" :class="{ highlighted: conf.toolState.toolActive == 'eraser', notHighlighted: conf.toolState.toolActive != 'eraser' }" 
-				@onClick="conf.toolState.toolActive = 'eraser'"
-				:propStyle="{default:{rect:{fill:'none'}}, highlight:{rect:{fill:'yellow'}}}" />
-			
-			
-			<Svg.Button style="width:3ch; height:3ch;cursor:help;" :text="String.fromCodePoint(`0x${conf.tools.unicode.code}`)"  :class="{ highlighted: conf.toolState.toolActive == 'unicode', notHighlighted: conf.toolState.toolActive != 'unicode' }"
-				@onClick="conf.toolState.toolActive = 'unicode'"
-				@click.middle="windowStore().createNewWindow({component:'unicode'})"
-				@contextmenu.prevent="windowStore().createNewOrUnminimize({component:'unicode'})"	 
-				:propStyle="{default:{rect:{fill:'none'}}, highlight:{rect:{fill:'yellow'}}}" 
-				:amountBadge="windowStore()?.windowListComponentKey['unicode']"/>
-
-			<Svg.Button style="width:3ch; height:3ch;cursor:help;" :text="null"  :class="{ highlighted: conf.toolState.toolActive == 'picture', notHighlighted: conf.toolState.toolActive != 'picture' }"
-				@onClick="conf.toolState.toolActive = 'picture'"
-				@click.middle="windowStore().createNewWindow({component:'picture'})"
-				@contextmenu.prevent="windowStore().createNewOrUnminimize({component:'picture'})"	 
-				:propStyle="{default:{rect:{fill:'none'}}, highlight:{rect:{fill:'yellow'}}}" 
-				:amountBadge="windowStore()?.windowListComponentKey['picture']"
-				:image="configStore().picturesPath+configStore().lists.pictureList[configStore().tools.picture.name].file"
-				/>
+				<span title="Nav">
+					<Svg.Button style="width:3ch; height:3ch;"  :text="'&#x270a;'" :active="conf.toolState.toolActive=='nav'" :class="{ highlighted: conf.toolState.toolActive == 'nav', notHighlighted: conf.toolState.toolActive != 'nav' }" 
+						@onClick="conf.toolState.toolActive = 'nav'" 
+						:propStyle="{default:{rect:{fill:'none'}}, highlight:{rect:{fill:'yellow'}}}" />
+				</span>
+				<span title="Pencil">
+					<Svg.Button style="width:3ch; height:3ch;"  :text="'&#x270f;&#xfe0f;'" :active="conf.toolState.toolActive=='pencil'" :class="{ highlighted: conf.toolState.toolActive == 'pencil', notHighlighted: conf.toolState.toolActive != 'pencil' }" 
+						@onClick="conf.toolState.toolActive = 'pencil'" 
+						:propStyle="{default:{rect:{fill:'none'}}, highlight:{rect:{fill:'yellow'}}}" />
+				</span>
+				<span title="Eraser">
+					<Svg.Button style="width:3ch; height:3ch;"  :text="'&#9003;'" :active="conf.toolState.toolActive=='eraser'" :class="{ highlighted: conf.toolState.toolActive == 'eraser', notHighlighted: conf.toolState.toolActive != 'eraser' }" 
+						@onClick="conf.toolState.toolActive = 'eraser'"
+						:propStyle="{default:{rect:{fill:'none'}}, highlight:{rect:{fill:'yellow'}}}" />
+				</span>
+				<span title="Unicode">
+					<Svg.Button style="width:3ch; height:3ch;cursor:help;" :text="String.fromCodePoint(`0x${conf.tools.unicode.code}`)"  :class="{ highlighted: conf.toolState.toolActive == 'unicode', notHighlighted: conf.toolState.toolActive != 'unicode' }"
+						@onClick="conf.toolState.toolActive = 'unicode'"
+						@click.middle="windowStore().createNewWindow({component:'unicode'})"
+						@contextmenu.prevent="windowStore().createNewOrUnminimize({component:'unicode'})"	 
+						:propStyle="{default:{rect:{fill:'none'}}, highlight:{rect:{fill:'yellow'}}}" 
+						:amountBadge="windowStore()?.windowListComponentKey['unicode']"/>
+				</span>
+				<span title="Pictures">
+					<Svg.Button style="width:3ch; height:3ch;cursor:help;" :text="null"  :class="{ highlighted: conf.toolState.toolActive == 'picture', notHighlighted: conf.toolState.toolActive != 'picture' }"
+						@onClick="conf.toolState.toolActive = 'picture'"
+						@click.middle="windowStore().createNewWindow({component:'picture'})"
+						@contextmenu.prevent="windowStore().createNewOrUnminimize({component:'picture'})"	 
+						:propStyle="{default:{rect:{fill:'none'}}, highlight:{rect:{fill:'yellow'}}}" 
+						:amountBadge="windowStore()?.windowListComponentKey['picture']"
+						:image="configStore().picturesPath+configStore().lists.pictureList[configStore().tools.picture.name].file"
+						/>
+				</span>
 				
 		</div>
+
+		
 		
 		
 		<div class="menu-group">
@@ -106,7 +136,6 @@
 				titleArrowUp="Increase"
 				titleArrowDown="Decrease"
 				:settings="{titleContainer:'Draw size', titleArrowUp:'Increase', titleArrowUp:'Decrease', arrowHoldDelay: 300, arrowHoldSpeed:100, containerWidthMode:'adjustFontSize'}"
-
 				:prop-style="{list:{width:'5ch'}}"
 				:list="drawSizeList"
 				:selected=configStore().toolState.drawSize
@@ -125,7 +154,7 @@
 		<div class="menu-group" :ref="(el)=>someStore().list.colors.ref=el">
 			<ColorPicker
 				:color-list="configStore().lists.colors"
-				:active-color-index="configStore().toolState.activeColor"
+				:active-color-index="Number(configStore().toolState.activeColor)"
 				@setActiveIndex="(configStore().toolState.activeColor = $event)" />
 		</div>
 
@@ -160,7 +189,27 @@
 
 		
 			<div class="cursor-default menu-group">
+				<span title="Pizza companion">
+					<Svg.Button style="width:3ch; height:3ch;cursor:help;" :text="null"  :class="{ highlighted: conf.toolState.toolActive == 'picture', notHighlighted: conf.toolState.toolActive != 'picture' }"
+						@onClick="windowStore().createNewOrUnminimize({component:'PizzaCompanion'})"
+						@click.middle="windowStore().createNewWindow({component:'PizzaCompanion'})"
+						@contextmenu.prevent=""	 
+						:amountBadge="windowStore()?.windowListComponentKey['PizzaCompanion']"
+						:propStyle="{default:{rect:{fill:'none'}}, highlight:{rect:{fill:'yellow'}}}" 
+						:image="configStore().picturesPath+configStore().lists.pictureList['Kebabpizza'].file"
+						:active="false"
+						/>
+				</span>
+				<!-- <Svg.Button style="width:3ch; height:3ch;cursor:help;" :text="null"  :class="{ highlighted: conf.toolState.toolActive == 'picture', notHighlighted: conf.toolState.toolActive != 'picture' }"
+					@onClick="configStore().pizzaCompanion.open =! configStore().pizzaCompanion.open"
+					@click.middle=""
+					@contextmenu.prevent=""	 
+					:propStyle="{default:{rect:{fill:'none'}}, highlight:{rect:{fill:'yellow'}}}" 
+					:tooltip="'Pizza companion'"
+					:image="configStore().picturesPath+configStore().lists.pictureList['Kebabpizza'].file"
+					/> -->
 				
+				<span title=""></span>
 				<Svg.Button style="width:3ch; height:3ch;" 
 					@onClick="windowStore().createNewOrUnminimize({component:'ActualPopup'})" 
 					@click.middle="windowStore().createNewWindow({component:'ActualPopup'})"
@@ -170,19 +219,22 @@
 					:active="isExpired"
 					 />
 
+					 <span title=""></span>
 				<Svg.Button style="width:3ch; height:3ch;" 
 					@onClick="windowStore().createNewOrUnminimize({component:'TheWindowHandler'})" 
 					@click.middle="windowStore().createNewWindow({component:'TheWindowHandler'})"
 					:amountBadge="windowStore()?.windowListComponentKey['TheWindowHandler']"
 					:text="'&#128471;'" 	 />
 
+					<span title=""></span>
 				<Svg.Button style="width:3ch; height:3ch;" 
 					@onClick="windowStore().createNewOrUnminimize({component:'debug'})" 
 					@click.middle="windowStore().createNewWindow({component:'debug'})"
 					:amountBadge="windowStore()?.windowListComponentKey['debug']"
 					:text="'&#128030;'" 	 />
 
-				<span :ref="(el)=>someStore().list.settings.ref=el">
+					
+				<span :ref="(el)=>someStore().list.settings.ref=el" title="Settings">
 					<Svg.Button style="width:3ch; height:3ch;" 
 						@onClick="windowStore().createNewOrUnminimize({component:'Settings'})" 
 						@click.middle="windowStore().createNewWindow({component:'Settings'})"
@@ -190,6 +242,7 @@
 						text="&#9881;&#65039;"	 />
 				</span>
 
+				<span title=""></span>
 				<div :ref="(el)=>someStore().list.login.ref=el">
 					<Dropdown
 						:options="['Login', 'Logout', '&#129372;']"
@@ -228,13 +281,29 @@ const range = (start, stop, step) =>
 
 const drawSizeList = Array.from({length:20}).map((_, i) =>  i);
 
-function contextMenu(e){
+function unnamedMiddleWareDashIshThatWillLiveInWindowStore(component, {tooltip=null, rightClickFunction}={}){
+	return {
+		type: 'function', 
+		tooltip: tooltip,
+		clickLeft: ()=>windowStore().createNewOrUnminimize({component}), 
+		clickMiddle: ()=>windowStore().createNewWindow({component}), 
+		clickRight: (rightClickFunction)? ()=>rightClickFunction() : '', 
+	}
+}
+
+function contextMenu(e, val){
 	let items = {
-		//[String.fromCodePoint('0x'+'2795')+'Zoom to fit image']: ()=> refs().TheZoom.resetZoom()
+		//defaultItem: '',
+	}
+	if(val.includes('scale')) items = {...items,
 		['🔍'+' Scale to 1']: ()=> refs().TheZoom.resetZoom({},1),
 		['🔍'+' Zoom to fit image']: ()=> refs().TheZoom.resetZoom({mode:'scaleToFit'}), 
 		['🔍'+' Zoom to fill screen']: ()=> refs().TheZoom.resetZoom({mode:'scaleToFill'}),
 	}
+	if(val.includes('create')) items['Create new canvas or layer'] = unnamedMiddleWareDashIshThatWillLiveInWindowStore('TheFormCreate', {rightClickFunction:()=>console.log('right click')});
+	if(val.includes('modify')) items['Modify current canvas or layer'] = unnamedMiddleWareDashIshThatWillLiveInWindowStore('TheFormModify', {})
+	if(val.includes('overview')) items['Overview'] = unnamedMiddleWareDashIshThatWillLiveInWindowStore('TheOverview', {})
+	
 	contextMenuStore().onContextMenu(e, items)
 }
 
@@ -261,10 +330,6 @@ function removeCanvas(e) {
 }
 
 const isExpired = computed(()=>{
-	/* console.log('isExpired1', new Date() > window.localStorage.getItem('popup_notes_read'))
-	console.log('isExpired2', new Date())
-	console.log('isExpired3', window.localStorage.getItem('popup_notes_read'), new Date())
-	console.log('isExpired4', store().popup_notes_read) */
 	let latestMessageDate = (store().popup_notes_read) ? store().popup_notes_read-10 : true 
 	return latestMessageDate > store().popup_notes_read
 })

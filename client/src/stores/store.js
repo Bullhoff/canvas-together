@@ -46,6 +46,7 @@ export const contextMenuStore = defineStore('contextMenu', () => {
 
 
 export const store = defineStore('store', () => {
+	
 	const settingSettings = reactive({})
 	const watchers = {}
 	const factoryDefault = reactive(JSON.parse(JSON.stringify({...getSettings()})))
@@ -235,7 +236,7 @@ export const store = defineStore('store', () => {
 			}
 		}, 
 		load: async()=>{
-			const ni = await setSettingSettings({obj:await getSettings(), autoSaveValue:false, cat:{autoSaveValue:true, keys:['toolState', 'tools', 'saveConfigToBrowser']}})
+			const ni = await setSettingSettings({obj:await getSettings(), autoSaveValue:false, cat:{autoSaveValue:true, keys:['toolState', 'tools', 'saveConfigToBrowser', 'saveConfigToBrowser', 'guidePopupsEnabled']}})
 			await _.merge(settingSettings, ni)
 			console.log('yyyyyyyyyyyyyyyyyyyyyy', settingSettings)
 			if(localStorage.getItem('list_autoSave'))
@@ -273,8 +274,8 @@ export const store = defineStore('store', () => {
 	
 	
 	
-	
-
+	let debugObj = {performance: {}, COUNT:{changeParent:0, store:0}, changeParent_COUNT:0}
+	debugObj.COUNT.store =+ 1
 	let timeout = []
 	return {
 		init, getSettings, setTitle, 
@@ -330,15 +331,27 @@ export const store = defineStore('store', () => {
 			return store().messageQueue.push(obj)
 		},
 
-		// DEBUG
-		debugObj: {performance: {}},
+		// DEBUG	debugObj.changeParent_COUNT
+		debugObj ,//: {performance: {}, COUNT:{changeParent:0, store:0}, changeParent_COUNT:0},
 		debugMsg: {},
 		debug(obj){
 			return {
 				debugObj: this.debugObj,
 				performance: this.debugObj.performance, 
+				listLengths: {
+					parentList: canvasStore().parentList.length, 
+					canvasList: Object.keys(canvasStore().canvasList).length, 
+					canvasOrder: canvasStore().canvasOrder.length, 
+					canvasRefs: Object.keys(canvasStore().canvasRefs).length, 
+					canvasHistory: Object.keys(canvasStore().canvasHistory).length, 
+					watchers: Object.keys(watchers).length,
+				},
 				parentList: canvasStore().parentList.map((x)=> JSON.stringify(x)) ,
 				canvasList: Object.entries(canvasStore().canvasList).map(([key, value])=> {return{[key]: JSON.stringify(value)}}),
+				canvasOrder: canvasStore().canvasOrder, 
+				canvasState: canvasStore().canvasState, 
+				canvasRefs: canvasStore().canvasRefs,
+				canvasHistory: canvasStore().canvasHistory,
 				watchers: watchers, 
 				current: canvasStore().current, 
 				navState: configStore().navState, 
@@ -353,9 +366,11 @@ export const store = defineStore('store', () => {
 				currentPicture: {
 					width: { raw: canvasStore().currentPicture.width, scaled: canvasStore().currentPicture.width*configStore().navState.scale},
 					height: { raw: canvasStore().currentPicture.height, scaled: canvasStore().currentPicture.height*configStore().navState.scale},
-					/* width: canvasStore().currentPicture.width,
-					height: canvasStore().currentPicture.height, */
+					src: canvasStore().currentPicture.src, 
+					currentPicture: canvasStore().currentPicture, 
 				}, 
+				
+				
 				
 				
 				
@@ -390,6 +405,7 @@ export const refs = defineStore('refs', {
 		return{
 		TheZoom: ref(null), 
 		divRefs: reactive({}),
+		svgComponent: ref(null)
 	}}, 
 	getters: {}, actions: {
 		

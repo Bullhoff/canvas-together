@@ -1,4 +1,4 @@
-import { ref, computed, reactive, watch, unref, toRaw, markRaw, isRef, isProxy, isReadonly } from 'vue';
+import { ref, computed, reactive, watch, unref, toRaw, markRaw, isRef, isProxy, isReadonly, nextTick } from 'vue';
 import { defineStore } from 'pinia';
 import * as utils from './../utils.js'
 import c from './../constants.js'
@@ -7,12 +7,14 @@ import _ from 'lodash';
 import Settings from '@/components/cSettings.vue'
 import TheFormCreate from '@/components/cTheFormCreate.vue'
 import TheFormModify from '@/components/cTheFormModify.vue'
+import TheOverview from '@/components/cTheOverview.vue'
 import TheUnicodeMenu from '@/components/cTheUnicodeMenu.vue'
 import TheRegisterUser from '@/components/cTheRegisterUser.vue'
 import TheDebug from '@/components/cTheDebug.vue'
 import ActualPopup from '@/components/cActualPopup.vue'
 import {ThePictureMenu, TheWindowHandler, ListComponent} from '@/components/Components.vue'
 
+//import PizzaCompanion from '@/components/test/svg22.vue'
 
 //import unicode from "./../assets/unicode.json"
 
@@ -159,6 +161,11 @@ export const windowStore = defineStore('window', () => {
 		}
 	} */
 	const componentTypes = {
+		'PizzaCompanion':{
+			//head: ['List'],
+			//bodyComponent: [markRaw(ListComponent)],
+			//propStyle: {container:{minWidth:'fit-content'}},
+		},
 		'List':{
 			head: ['List'],
 			bodyComponent: [markRaw(ListComponent)],
@@ -199,6 +206,11 @@ export const windowStore = defineStore('window', () => {
 			bodyComponent: [markRaw(TheFormCreate)],
 			propStyle: {container:{width:'fit-content'}},
 		}, 
+		'TheOverview': {
+			head: ['TheOverview'], 
+			bodyComponent: [markRaw(TheOverview)],
+			propStyle: {container:{width:'fit-content'}},
+		}, 
 		'TheWindowHandler':{
 			head: ['TheWindowHandler'], 
 			bodyComponent: [markRaw(TheWindowHandler)],
@@ -213,6 +225,17 @@ export const windowStore = defineStore('window', () => {
 	const componentTypes3 = ({component, head, headComputed, headComponent, body, bodyComputed, bodyComponent, propStyle, hide} = {}) => {
 		return {
 			//component: (!component)?'': componentTypes[component].component,
+			head: (componentTypes[component].head) ? JSON.parse(JSON.stringify(componentTypes[component].head)) : [],
+			headComponent: (componentTypes[component].headComponent)?  componentTypes[component].headComponent  : null,
+			headComputed: (componentTypes[component].headComputed)? componentTypes[component].headComputed  : null,
+			body: (componentTypes[component].body)? JSON.parse(JSON.stringify(componentTypes[component].body))  : [],
+			bodyComponent: (componentTypes[component].bodyComponent)? componentTypes[component].bodyComponent  : null,
+			bodyComputed: (componentTypes[component].bodyComputed)? componentTypes[component].bodyComputed  : null,
+			propStyle: (componentTypes[component].propStyle) ? JSON.parse(JSON.stringify(componentTypes[component].propStyle))  : {},
+			ye: computed(()=>'vaa')
+		} 
+		/* return {
+			//component: (!component)?'': componentTypes[component].component,
 			head: (componentTypes[component].head) ? componentTypes[component].head : [],
 			headComponent: (componentTypes[component].headComponent)?  componentTypes[component].headComponent  : null,
 			headComputed: (componentTypes[component].headComputed)? componentTypes[component].headComputed  : null,
@@ -220,7 +243,7 @@ export const windowStore = defineStore('window', () => {
 			bodyComponent: (componentTypes[component].bodyComponent)? componentTypes[component].bodyComponent  : null,
 			bodyComputed: (componentTypes[component].bodyComputed)? componentTypes[component].bodyComputed  : null,
 			propStyle: (componentTypes[component].propStyle) ? componentTypes[component].propStyle  : {},
-		} 
+		}  */
 		/* {
 			//component: (!component)?'': componentTypes[component].component,
 			head: (componentTypes[component].head) ? componentTypes[component].head : [],
@@ -360,10 +383,11 @@ export const windowStore = defineStore('window', () => {
 		refs[id] = null
 		windows[id] = reactive(defaultWindow({id, component}))
 		
-		draggableContent[id] = componentTypes[component]
-		//draggableContent[id] = componentTypes3({component})
-		//draggableContent[id] = componentTypes2(component)
-
+		//draggableContent[id] = componentTypes[component]
+		draggableContent[id] = {...componentTypes3({component})}
+		//draggableContent[id] = {...componentTypes2(component)}
+		console.log('*********', draggableContent[id].ye)
+		//componentTypes3
 		//let comp = {...componentTypes[component]}
 		//draggableContent[id] = JSON.parse(JSON.stringify(componentTypes[component]))
 		// isRef, isProxy, isReadonly
@@ -490,7 +514,10 @@ export const windowStore = defineStore('window', () => {
 					refs[id].style.width = draggableContent[id].propStyle?.container?.width
 			}
 		}, 
+		/* async onMounted(divRef, id){
+			await nextTick() */
 		onMounted(divRef, id){
+			//await nextTick()
 			refs[id] = divRef
 			focus(id)
 			let width = refs[id].offsetWidth

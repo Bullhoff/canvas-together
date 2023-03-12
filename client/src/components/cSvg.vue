@@ -135,7 +135,7 @@ export const Button = defineComponent({
 		const onClick = () => emit('onClick', 'yeaaa')
 		const imageRender = () => {
 			if(!props.image) return
-			return(	<image href={props.image} height="100%" width="100%" />)
+			return(	<image href={props.image}  height="100%" width="100%" />)
 		}
 		const badgeRender = () => {
 			if(!props.amountBadge) return
@@ -147,7 +147,7 @@ export const Button = defineComponent({
 		}
 		return () => (
 			<svg width='100%' height='100%' class="prevent-select" onclick={onClick} onmouseenter={onMouseEnter} onmouseleave={onMouseLeave}>
-				<rect ref={(el) => refs.rect = el} style={styleDefault.rect} /> {/* style={style.rect} */}	{/* style={style.default.rect}    eventStyle[0].rect*/}
+				<rect ref={(el) => refs.rect = el} style={styleDefault.rect} title={props.tooltip}/> {/* style={style.rect} */}	{/* style={style.default.rect}    eventStyle[0].rect*/}
 				{imageRender()}
 				{textRender()}
 				{badgeRender()}

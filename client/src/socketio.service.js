@@ -68,7 +68,7 @@ class SocketioService {
           canvasStore().queue.push({event:'redraw', layer_id:'users'})
         }
         else if(point.type != 'cursor') 
-          canvasStore().queue.push({event:'drawPoint', point, layer_id})
+          canvasStore().queue.push({event:'drawPoint', point, layer_id,  strokeIndex})
       }
 			
     });

@@ -26,7 +26,7 @@
 			</select>
 			<input type="number" v-model="selectedCategoryIndex" @change="spinnerCategory"
 				style="width:3ch; left:0px;" />
-
+			
 			<select v-model="conf.tools.unicode.sizeMultiplier">
 				<template v-for="(key) in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25]">
 					<option :value="key"> {{ key }} </option>
@@ -96,16 +96,26 @@ function contextMenuTest(e, key, value, addOrRemove){
 		Copy: [
 			() => navigator.clipboard.writeText(String.fromCodePoint('0x'+value)),	// await navigator.clipboard.readText()	
 			{
+				'$Copy\xa0selection': {tooltip: window.getSelection().toString()},
 				'Copy\xa0selection': ()=> navigator.clipboard.writeText(window.getSelection().toString()), 
+				'$Copy\xa0symbol': {tooltip: String.fromCodePoint('0x'+value)},
 				'Copy\xa0symbol': () => navigator.clipboard.writeText(String.fromCodePoint('0x'+value)),
 				//'Copy\xa0unicode': () => navigator.clipboard.writeText(value),
+				'$Copy\xa0unicode': {tooltip: value},
 				'Copy\xa0unicode': [
 					() => navigator.clipboard.writeText(value),	
 					{
-						'Copy\xa0unicode in \"fromCodePoint\" format': () => navigator.clipboard.writeText(`String.fromCodePoint('0x${value}')`),
+						//'$Copy\xa0unicode in \"fromCodePoint\" format': {tooltip: `String.fromCodePoint('0x${value}')`},
+						//'Copy\xa0unicode in \"fromCodePoint\" format': () => navigator.clipboard.writeText(`String.fromCodePoint('0x${value}')`),
+						['Copy: String.fromCodePoint(0x'+value+')']: () => navigator.clipboard.writeText(`String.fromCodePoint('0x${value}')`),
+						['Copy: \\u{'+value+'}']: () => navigator.clipboard.writeText(`\\u{${value}}`),
+						['Copy: \\u'+value+'']: () => navigator.clipboard.writeText(`\\u${value}`),
+						['Copy: &#x'+value+';']: () => navigator.clipboard.writeText(`&#x${value};`),
+						//['Copy: \\u{${value}}`']: () => navigator.clipboard.writeText(String.raw`\u{${value}}`), &#x2660;
 					}
 				],
 				'Copy\xa0name': () => navigator.clipboard.writeText(`${key}: ${value}`),
+				'$Paste': {tooltip: 'this aint do nothing'},
 				Paste: async() => {console.log(await navigator.clipboard.readText())},
 				
 			}

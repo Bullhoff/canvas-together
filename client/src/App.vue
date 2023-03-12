@@ -1,12 +1,18 @@
 <script setup>
 import { RouterLink, RouterView } from 'vue-router'
 import { defineComponent, onMounted, onBeforeMount, watch, onUpdated, nextTick, ref, reactive, computed } from 'vue'
-import { canvasStore, styleStore, configStore, store } from "@/stores/store.js";
+import { canvasStore, styleStore, configStore, store, someStore, refs, windowStore } from "@/stores/store.js";
 import SocketioService from './socketio.service.js';
 import * as utils from './utils.js'
 import c from './constants.js';
 import _ from 'lodash';
 
+
+store().$state
+//canvasStore().$state
+windowStore().$state
+someStore().$state
+refs().$state
 
 watch(() => (configStore().user.username), async (username) => {
       store().msg({USER1: {
@@ -14,6 +20,7 @@ watch(() => (configStore().user.username), async (username) => {
         accounts: Object.keys(configStore().user.accounts),
         accounts: configStore().user.accounts,
       }})
+      store().debugObj.COUNT.watchUsername =+ 1
       if(configStore().user.username == 'undefined') configStore().user.username = 'Guest'
       
       if(configStore().user.username != 'Guest' && configStore().user.username != 'Guest'){
@@ -42,11 +49,13 @@ watch(() => (configStore().user.username), async (username) => {
 
 onMounted(() => { 
   
-  store().init()
+  /* store().init()
   if(utils.getStorage('accounts')) configStore().user.accounts = JSON.parse(utils.getStorage('accounts'))
-  configStore().user.username = utils.getStorage('username') ? utils.getStorage('username').replaceAll('\"','') : 'Guest'
-  
 
+  let usr = configStore().user.username
+  configStore().user.username = utils.getStorage('username') ? utils.getStorage('username').replaceAll('\"','') : 'Guest'
+  if(usr == configStore().user.username) canvasStore().initCanvasPage()
+ */
   if(configStore().general.killConnectionWhenWindowNotVisible)
   document.addEventListener("visibilitychange", (e) => {
     console.log(document.visibilityState)

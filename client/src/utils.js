@@ -110,10 +110,11 @@ export function normalizeLength(text, paddingLength = 2, padding = '.') {
 }
 
 export async function fetchPicture({ pictureFile = null } = {}) {
+	canvasStore().state.loading = 'Fetching image from server'
 	var data = new FormData();
 	data.append('pictureFile', pictureFile);
 	let datatemp = [];
-	return await fetch(`${c.SERVERIP}/api/getImage2`, {	// 'http://localhost:3000'
+	let pic = await fetch(`${c.SERVERIP}/api/getImage2`, {	// 'http://localhost:3000'
 		method: 'POST',
 		body: data,
 		//params: data,
@@ -140,8 +141,9 @@ export async function fetchPicture({ pictureFile = null } = {}) {
 		// Create a new response out of the stream
 		.then((stream) => new Response(stream))
 		// Create an object URL for the response
-		.then((response) => {
-			return response.blob();
+		.then(async (response) => {
+			//store().msg({text: {'fetchImage.response.blob()': await response.blob()}})
+			return await response.blob();
 		})
 		.then((blob) => {
 			//canvasses.currentPicture.src = blob
@@ -152,6 +154,11 @@ export async function fetchPicture({ pictureFile = null } = {}) {
 			//canvasses.currentPicture.src = url;
 		})
 		.catch((err) => console.error(err));
+
+		store().msg({'fetchImage.pic': pic})
+		console.log('pic', pic)
+		canvasStore().state.loading = false
+		return pic
 }
 function timeout(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));

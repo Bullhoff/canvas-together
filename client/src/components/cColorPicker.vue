@@ -22,7 +22,7 @@
 						:style="[style?.colorBox]"
 						style="text-align:center;"
 						@change="colorChanged(i, color)"
-						:class="{ highlighted: i == activeColor, notHighlighted: i != activeColor }"
+						:class="{ highlighted: i == props.activeColorIndex, notHighlighted: i != props.activeColorIndex }"
 						@click="changeColorIndex(i, color)"
 						@mousedown="changeColorIndex(i, color)"
 						@contextmenu.prevent=""
@@ -41,7 +41,7 @@
 						:style="[style?.colorBox]"
 						style="text-align:center;"
 						@change="colorChanged(i, color)"
-						:class="{ highlighted: i == activeColor, notHighlighted: i != activeColor }"
+						:class="{ highlighted: i == props.activeColorIndex, notHighlighted: i != props.activeColorIndex }"
 						@click="changeColorIndex(i, color)"
 						@mousedown.middle="changeColorIndex(i, color)"
 						@contextmenu.prevent=""
@@ -56,13 +56,13 @@
 							:style="[style?.colorBox]"
 							v-model="colors[i]"
 							@change="colorChanged(i, color)"
-							:class="{ highlighted: i == activeColor, notHighlighted: i != activeColor }"
+							:class="{ highlighted: i == props.activeColorIndex, notHighlighted: i != props.activeColorIndex }"
 							@click="changeColorIndex(i, color)"
 							@mousedown="changeColorIndex(i, color)"
 							@contextmenu.stop.prevent=""
 							:title="colors[i]">
 
-						<div style="z-index:5;display:inline;position:absolute;left:0.5ch;" v-if="i == activeColor"
+						<div style="z-index:5;display:inline;position:absolute;left:0.5ch;" v-if="i == props.activeColorIndex"
 							:title="colors[i]"
 							:style="checkMarkColor">✔</div>
 					</div>
