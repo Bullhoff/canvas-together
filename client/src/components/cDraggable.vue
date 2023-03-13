@@ -27,9 +27,9 @@
 					</p>
 					<slot name="header" style="display:inline-block;"></slot>
 					<div style="position:absolute; right:1px; top:1px; display:inline-flex;">
-						<button style="background-color: gray;border-radius: 3px;" @click="func.minimize();">-</button>
-						<button style="background-color: gray;border-radius: 3px;" @click="func.maximize();">𓂸</button>
-						<button style="background-color: gray;border-radius: 3px;" @click="func.close();">X</button>
+						<button style="background-color: gray;border-radius: 3px;" @click="func.minimize();">{{String.fromCodePoint('0x1F5D5')}}</button>
+						<button style="background-color: gray;border-radius: 3px;" @click="func.maximize();">{{String.fromCodePoint('0x1F5D6')}}</button>
+						<button style="background-color: gray;border-radius: 3px;" @click="func.close();">{{String.fromCodePoint('0x1F5D9')}}</button>
 					</div>
 				</header>
 			</div>

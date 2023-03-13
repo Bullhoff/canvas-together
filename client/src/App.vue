@@ -41,7 +41,10 @@ watch(() => (configStore().user.username), async (username) => {
       if(localStorage.getItem('username'))
         localStorage.setItem('username', configStore().user.username)
       
-      
+
+      SocketioService.disconnect()
+      SocketioService.setupSocketConnection()
+
       canvasStore().current.canvas_id = null
       canvasStore().current.layer_id = null
       canvasStore().initCanvasPage()

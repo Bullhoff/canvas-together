@@ -114,17 +114,20 @@ function loadPictures(){
 }
 
 onBeforeMount(async () => {
-	SocketioService.setupSocketConnection();
+	//SocketioService.setupSocketConnection();
 })
 
 onMounted(async () => {
+	
 	//canvasStore().initCanvasPage()
 	store().init()
 	if(utils.getStorage('accounts')) configStore().user.accounts = JSON.parse(utils.getStorage('accounts'))
 
 	let usr = configStore().user.username
-	configStore().user.username = utils.getStorage('username') ? utils.getStorage('username').replaceAll('\"','') : 'Guest'
-	if(usr == configStore().user.username) canvasStore().initCanvasPage()
+	configStore().user.username = await utils.getStorage('username') ? utils.getStorage('username').replaceAll('\"','') : 'Guest'
+	if(usr == configStore().user.username) await canvasStore().initCanvasPage()
+
+	SocketioService.setupSocketConnection();
 
 })
 
